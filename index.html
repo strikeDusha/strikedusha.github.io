@@ -1141,7 +1141,7 @@
         const profitEl = document.getElementById('profit');
         
         // Переменные игры
-        let balance = 100.00;
+        let balance = 1000.00;
         let wins = 0;
         let losses = 0;
         let totalProfit = 0.00;
@@ -1764,7 +1764,7 @@
         // Начать бонусную игру
         function startBonusGame() {
             isBonusGameActive = true;
-            freeSpins = 7; // ИЗМЕНЕНО: теперь 12 спинов вместо 5
+            freeSpins = 10; // ИЗМЕНЕНО: теперь 12 спинов вместо 5
             bonusSpinResults = [];
             bonusSpinWins = 0;
             totalBonusMultiplier = 1.00;
@@ -1882,7 +1882,7 @@
         
         // Сброс игры
         function resetGame() {
-            balance = 100.00;
+            balance = 1000.00;
             wins = 0;
             losses = 0;
             totalProfit = 0.00;
