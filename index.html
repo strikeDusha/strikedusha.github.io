@@ -1,0 +1,1949 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Слот-машина Invoker - Финальная версия</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0a1929 0%, #1a1a2e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px;
+            width: 100%;
+            border-bottom: 2px solid #ff5722;
+            position: relative;
+        }
+        
+        h1 {
+            color: #ff5722;
+            text-shadow: 0 0 10px rgba(255, 87, 34, 0.7);
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+        
+        .subtitle {
+            color: #64b5f6;
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .game-area {
+            display: flex;
+            gap: 30px;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+        
+        .left-panel {
+            flex: 1;
+            min-width: 320px;
+            background: rgba(10, 25, 47, 0.9);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            border: 2px solid #1e3a5f;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
+        .right-panel {
+            flex: 2;
+            min-width: 500px;
+            background: rgba(10, 25, 47, 0.9);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            border: 2px solid #1e3a5f;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            position: relative;
+        }
+        
+        .game-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            position: relative;
+        }
+        
+        .slots-container {
+            flex: 3;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            border: 1px solid #37474f;
+            position: relative;
+            overflow: hidden;
+            min-height: 220px;
+        }
+        
+        .slot-frame {
+            width: 140px;
+            height: 140px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+        }
+        
+        .slot-window {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+            border: 3px solid #1e3a5f;
+            border-radius: 10px;
+            background: #0d1b2a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .slot {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+            font-weight: bold;
+            transition: transform 0.5s;
+        }
+        
+        .slot-spinning {
+            animation: slot-spin 0.15s infinite linear;
+        }
+        
+        @keyframes slot-spin {
+            0% { transform: translateY(-100%); opacity: 0.5; }
+            10% { transform: translateY(-80%); opacity: 0.6; }
+            20% { transform: translateY(-60%); opacity: 0.7; }
+            30% { transform: translateY(-40%); opacity: 0.8; }
+            40% { transform: translateY(-20%); opacity: 0.9; }
+            50% { transform: translateY(0%); opacity: 1.0; }
+            60% { transform: translateY(20%); opacity: 0.9; }
+            70% { transform: translateY(40%); opacity: 0.8; }
+            80% { transform: translateY(60%); opacity: 0.7; }
+            90% { transform: translateY(80%); opacity: 0.6; }
+            100% { transform: translateY(100%); opacity: 0.5; }
+        }
+        
+        .quas {
+            color: #00bcd4;
+            text-shadow: 0 0 15px rgba(0, 188, 212, 0.8);
+        }
+        
+        .wex {
+            color: #2196f3;
+            text-shadow: 0 0 15px rgba(33, 150, 243, 0.8);
+        }
+        
+        .exort {
+            color: #ff5722;
+            text-shadow: 0 0 15px rgba(255, 87, 34, 0.8);
+        }
+        
+        .bonus {
+            color: #ffeb3b;
+            text-shadow: 0 0 20px rgba(255, 235, 59, 0.9);
+        }
+        
+        .window-mask {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .window-top {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 15px;
+            background: linear-gradient(to bottom, rgba(255, 152, 0, 0.9), transparent);
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+        
+        .window-bottom {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 15px;
+            background: linear-gradient(to top, rgba(255, 152, 0, 0.9), transparent);
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+        
+        .bonus-slots-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-width: 180px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            border: 1px solid #37474f;
+        }
+        
+        .bonus-slot-frame {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .bonus-slot-window {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+            border: 3px solid #ffeb3b;
+            border-radius: 10px;
+            background: #0d1b2a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .bonus-slot {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: #ffeb3b;
+        }
+        
+        .bonus-slot-spinning {
+            animation: bonus-slot-spin 0.1s infinite linear;
+        }
+        
+        @keyframes bonus-slot-spin {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+        
+        .bonus-info {
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .bonus-title {
+            color: #ffeb3b;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 1.2rem;
+        }
+        
+        .bonus-multiplier-display {
+            font-size: 1.5rem;
+            color: #ffeb3b;
+            font-weight: bold;
+            margin: 5px 0;
+            text-shadow: 0 0 10px rgba(255, 235, 59, 0.8);
+        }
+        
+        .bonus-total-multiplier {
+            font-size: 1.2rem;
+            color: #4caf50;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+        
+        .bonus-result-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            flex-direction: column;
+            gap: 20px;
+            display: none;
+        }
+        
+        .bonus-result-content {
+            background: rgba(10, 25, 47, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            border: 3px solid #ffeb3b;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 0 50px rgba(255, 235, 59, 0.5);
+        }
+        
+        .bonus-result-title {
+            color: #ffeb3b;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px rgba(255, 235, 59, 0.8);
+        }
+        
+        .bonus-result-multiplier {
+            font-size: 3rem;
+            color: #4caf50;
+            margin: 20px 0;
+            font-weight: bold;
+            text-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
+        }
+        
+        .bonus-result-winnings {
+            font-size: 2.5rem;
+            color: #ffc107;
+            margin: 20px 0;
+            font-weight: bold;
+            text-shadow: 0 0 15px rgba(255, 193, 7, 0.8);
+        }
+        
+        .bonus-result-spins {
+            font-size: 1.5rem;
+            color: #64b5f6;
+            margin-top: 15px;
+        }
+        
+        .bonus-symbol-animation {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 8rem;
+            color: #ffeb3b;
+            text-shadow: 0 0 30px rgba(255, 235, 59, 0.9);
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .bonus-symbol-animation.show {
+            animation: bonus-symbol-pop 1s forwards;
+        }
+        
+        @keyframes bonus-symbol-pop {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            20% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+            40% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            60% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            80% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+        }
+        
+        .bet-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .control-label {
+            color: #64b5f6;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .sphere-selection {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        
+        .sphere-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            font-size: 2.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .sphere-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .sphere-btn.active {
+            border-color: #ffc107;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(255, 193, 7, 0.8);
+        }
+        
+        .sphere-btn.quas {
+            background: rgba(0, 188, 212, 0.2);
+            color: #00bcd4;
+            border-color: #00bcd4;
+        }
+        
+        .sphere-btn.wex {
+            background: rgba(33, 150, 243, 0.2);
+            color: #2196f3;
+            border-color: #2196f3;
+        }
+        
+        .sphere-btn.exort {
+            background: rgba(255, 87, 34, 0.2);
+            color: #ff5722;
+            border-color: #ff5722;
+        }
+        
+        .selected-combination {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .selected-sphere {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            font-weight: bold;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid #37474f;
+        }
+        
+        .bet-amount-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        
+        .bet-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #1e3a5f;
+            color: white;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .bet-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .bet-btn:hover:not(.disabled) {
+            background: #2d4d7a;
+            transform: scale(1.1);
+        }
+        
+        #bet-amount {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #ffc107;
+            min-width: 140px;
+            text-align: center;
+        }
+        
+        .mode-selection {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .mode-btn {
+            padding: 12px 20px;
+            border-radius: 8px;
+            background: #1e3a5f;
+            color: white;
+            border: 2px solid transparent;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+        }
+        
+        .mode-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .mode-btn.active {
+            border-color: #ffc107;
+            background: #2d4d7a;
+            box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+        }
+        
+        .low-mode.active {
+            background: rgba(76, 175, 80, 0.2);
+            border-color: #4caf50;
+        }
+        
+        .medium-mode.active {
+            background: rgba(255, 152, 0, 0.2);
+            border-color: #ff9800;
+        }
+        
+        .high-mode.active {
+            background: rgba(244, 67, 54, 0.2);
+            border-color: #f44336;
+        }
+        
+        .coefficients-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        .coefficients-table th,
+        .coefficients-table td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #37474f;
+        }
+        
+        .coefficients-table th {
+            background: rgba(30, 58, 95, 0.7);
+            color: #64b5f6;
+        }
+        
+        .coefficients-table td {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .coefficient {
+            font-weight: bold;
+            color: #ffc107;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+        
+        button {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        button.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        #spin-btn {
+            background: linear-gradient(to right, #ff5722, #ff9800);
+            color: white;
+            box-shadow: 0 5px 15px rgba(255, 87, 34, 0.4);
+            flex: 2;
+        }
+        
+        #spin-btn:hover:not(:disabled):not(.disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 87, 34, 0.6);
+        }
+        
+        #spin-btn:disabled, #spin-btn.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        #auto-spin-btn {
+            background: linear-gradient(to right, #2196f3, #00bcd4);
+            color: white;
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4);
+            flex: 1;
+        }
+        
+        #auto-spin-btn:hover:not(:disabled):not(.disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(33, 150, 243, 0.6);
+        }
+        
+        #buy-bonus-btn {
+            background: linear-gradient(to right, #ffeb3b, #ffc107);
+            color: #333;
+            box-shadow: 0 5px 15px rgba(255, 235, 59, 0.4);
+            flex: 1;
+        }
+        
+        #buy-bonus-btn:hover:not(:disabled):not(.disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 235, 59, 0.6);
+        }
+        
+        #reset-btn {
+            background: linear-gradient(to right, #9c27b0, #673ab7);
+            color: white;
+            box-shadow: 0 5px 15px rgba(156, 39, 176, 0.4);
+            flex: 1;
+        }
+        
+        #reset-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(156, 39, 176, 0.6);
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #37474f;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .stat-box {
+            text-align: center;
+            padding: 10px;
+            min-width: 150px;
+        }
+        
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #ff9800;
+            text-shadow: 0 0 5px rgba(255, 152, 0, 0.7);
+        }
+        
+        .stat-label {
+            font-size: 1rem;
+            color: #b0bec5;
+            margin-top: 5px;
+        }
+        
+        .bonus-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 10px;
+        }
+        
+        .bonus-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .bonus-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ffeb3b;
+        }
+        
+        .bonus-label {
+            font-size: 0.9rem;
+            color: #b0bec5;
+        }
+        
+        .result {
+            width: 100%;
+            text-align: center;
+            padding: 20px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.5);
+            font-size: 1.5rem;
+            font-weight: bold;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 10px;
+            transition: all 0.5s;
+        }
+        
+        .win {
+            color: #4caf50;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.8);
+            animation: pulse 1.5s infinite;
+        }
+        
+        .lose {
+            color: #f44336;
+        }
+        
+        .neutral {
+            color: #ffc107;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        
+        .win-amount {
+            font-size: 2rem;
+            color: #ffc107;
+            text-shadow: 0 0 10px rgba(255, 193, 7, 0.8);
+        }
+        
+        .bonus-active {
+            color: #ffeb3b;
+            text-shadow: 0 0 10px rgba(255, 235, 59, 0.8);
+            animation: pulse 1s infinite;
+        }
+        
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #78909c;
+            font-size: 0.9rem;
+            padding: 15px;
+            border-top: 1px solid #37474f;
+            width: 100%;
+        }
+        
+        .invoker-icon {
+            color: #ff5722;
+            font-size: 1.5rem;
+        }
+        
+        .match-info {
+            font-size: 1.1rem;
+            color: #64b5f6;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 1000px) {
+            .game-area {
+                flex-direction: column;
+            }
+            
+            .left-panel, .right-panel {
+                min-width: 100%;
+            }
+            
+            .slot-frame {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .slot {
+                font-size: 4rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            button {
+                padding: 12px 20px;
+                font-size: 1rem;
+            }
+            
+            .stat-box {
+                min-width: 120px;
+            }
+            
+            .sphere-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 2rem;
+            }
+            
+            .selected-sphere {
+                width: 50px;
+                height: 50px;
+                font-size: 1.8rem;
+            }
+            
+            .game-container {
+                flex-direction: column;
+            }
+            
+            .bonus-slots-container {
+                order: 3;
+                width: 100%;
+                margin-top: 20px;
+            }
+            
+            .bonus-slot-frame {
+                width: 100px;
+                height: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-hat-wizard invoker-icon"></i> Invoker Sphere Slots Deluxe</h1>
+            <p class="subtitle">Создайте свою комбинацию сфер, выберите ставку и испытайте удачу в бонусной игре!</p>
+        </header>
+        
+        <!-- Элемент для анимации бонусного символа -->
+        <div class="bonus-symbol-animation" id="bonus-symbol-animation">@</div>
+        
+        <!-- Оверлей результатов бонуса -->
+        <div class="bonus-result-overlay" id="bonus-result-overlay">
+            <div class="bonus-result-content">
+                <div class="bonus-result-title">БОНУСНАЯ ИГРА ЗАВЕРШЕНА!</div>
+                <div>Вы заработали:</div>
+                <div class="bonus-result-winnings" id="bonus-total-winnings">0.00</div>
+                <div>с множителем:</div>
+                <div class="bonus-result-multiplier" id="bonus-final-multiplier">1.00x</div>
+                <div class="bonus-result-spins">за 12 бесплатных спинов</div>
+                <button id="close-bonus-result" style="margin-top: 30px; padding: 15px 40px; font-size: 1.3rem;">
+                    <i class="fas fa-check"></i> ПРОДОЛЖИТЬ
+                </button>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <div class="left-panel">
+                <h2><i class="fas fa-cog"></i> Настройки игры</h2>
+                
+                <div class="bet-controls">
+                    <div class="control-group">
+                        <div class="control-label">1. Выберите свою комбинацию:</div>
+                        <div class="sphere-selection">
+                            <div class="sphere-btn quas" data-sphere="Q">Q</div>
+                            <div class="sphere-btn wex" data-sphere="W">W</div>
+                            <div class="sphere-btn exort" data-sphere="E">E</div>
+                        </div>
+                        <div class="control-label">Ваша комбинация:</div>
+                        <div class="selected-combination">
+                            <div class="selected-sphere" id="selected-sphere-1">?</div>
+                            <div class="selected-sphere" id="selected-sphere-2">?</div>
+                            <div class="selected-sphere" id="selected-sphere-3">?</div>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-label">2. Установите ставку (мин: 1.00):</div>
+                        <div class="bet-amount-control">
+                            <button class="bet-btn" id="bet-decrease">-</button>
+                            <div id="bet-amount">10.00</div>
+                            <button class="bet-btn" id="bet-increase">+</button>
+                        </div>
+                        <div class="mode-selection">
+                            <button class="bet-btn" data-bet="1">1</button>
+                            <button class="bet-btn" data-bet="5">5</button>
+                            <button class="bet-btn" data-bet="10">10</button>
+                            <button class="bet-btn" data-bet="25">25</button>
+                            <button class="bet-btn" data-bet="50">50</button>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-label">3. Выберите режим коэффициентов:</div>
+                        <div class="mode-selection">
+                            <div class="mode-btn low-mode active" data-mode="low">
+                                <div>Low Risk</div>
+                                <div style="font-size:0.8rem;margin-top:5px;">Безопасно</div>
+                            </div>
+                            <div class="mode-btn medium-mode" data-mode="medium">
+                                <div>Medium Risk</div>
+                                <div style="font-size:0.8rem;margin-top:5px;">Сбалансировано</div>
+                            </div>
+                            <div class="mode-btn high-mode" data-mode="high">
+                                <div>High Risk</div>
+                                <div style="font-size:0.8rem;margin-top:5px;">Рискованно</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-label">Коэффициенты для выбранного режима:</div>
+                        <table class="coefficients-table">
+                            <thead>
+                                <tr>
+                                    <th>Совпадений</th>
+                                    <th>Коэффициент</th>
+                                    <th>Пример при ставке 10</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1 сфера</td>
+                                    <td class="coefficient" id="coeff-1">0.6x</td>
+                                    <td id="example-1">6.00</td>
+                                </tr>
+                                <tr>
+                                    <td>2 сферы</td>
+                                    <td class="coefficient" id="coeff-2">2x</td>
+                                    <td id="example-2">20.00</td>
+                                </tr>
+                                <tr>
+                                    <td>3 сферы</td>
+                                    <td class="coefficient" id="coeff-3">6x</td>
+                                    <td id="example-3">60.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-label">Бонусная игра:</div>
+                        <div class="bonus-stats">
+                            <div class="bonus-stat">
+                                <div class="bonus-value" id="free-spins">0</div>
+                                <div class="bonus-label">Бесплатные спины</div>
+                            </div>
+                            <div class="bonus-stat">
+                                <div class="bonus-value" id="bonus-mult">1.00x</div>
+                                <div class="bonus-label">Текущий множитель</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="right-panel">
+                <h2><i class="fas fa-gamepad"></i> Игровая зона</h2>
+                
+                <div class="game-container">
+                    <div class="slots-container">
+                        <div class="slot-frame">
+                            <div class="slot-window">
+                                <div class="slot" id="slot1">
+                                    Q
+                                </div>
+                            </div>
+                            <div class="window-mask">
+                                <div class="window-top"></div>
+                                <div class="window-bottom"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="slot-frame">
+                            <div class="slot-window">
+                                <div class="slot" id="slot2">
+                                    W
+                                </div>
+                            </div>
+                            <div class="window-mask">
+                                <div class="window-top"></div>
+                                <div class="window-bottom"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="slot-frame">
+                            <div class="slot-window">
+                                <div class="slot" id="slot3">
+                                    E
+                                </div>
+                            </div>
+                            <div class="window-mask">
+                                <div class="window-top"></div>
+                                <div class="window-bottom"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bonus-slots-container">
+                        <div class="bonus-title">БОНУСНЫЙ СЛОТ</div>
+                        <div class="bonus-slot-frame">
+                            <div class="bonus-slot-window">
+                                <div class="bonus-slot" id="bonus-slot">
+                                    2x
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bonus-info">
+                            <div>Множители:</div>
+                            <div class="bonus-multiplier-display">2x, 3x, 4x, 35x</div>
+                            <div class="bonus-total-multiplier" id="bonus-total-multiplier">Текущий множитель: 1.00x</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="result" id="result">
+                    <div>Выберите комбинацию и нажмите SPIN!</div>
+                    <div class="match-info" id="match-info">Совпадений: 0</div>
+                </div>
+                
+                <div class="controls">
+                    <button id="spin-btn">
+                        <i class="fas fa-play"></i> SPIN
+                    </button>
+                    <button id="auto-spin-btn">
+                        <i class="fas fa-sync"></i> AUTO
+                    </button>
+                    <button id="buy-bonus-btn">
+                        <i class="fas fa-gem"></i> КУПИТЬ БОНУС (250x)
+                    </button>
+                    <button id="reset-btn">
+                        <i class="fas fa-redo"></i> СБРОС
+                    </button>
+                </div>
+                
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="stat-value" id="balance">1000.00</div>
+                        <div class="stat-label">Баланс</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="wins">0</div>
+                        <div class="stat-label">Побед</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="losses">0</div>
+                        <div class="stat-label">Поражений</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="profit">0.00</div>
+                        <div class="stat-label">Прибыль</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Invoker Sphere Slots Deluxe - Версия с улучшенной бонусной системой | Бонус выпадает только при трёх @!</p>
+        </footer>
+    </div>
+
+    <script>
+        // Элементы игры
+        const slots = [
+            document.getElementById('slot1'),
+            document.getElementById('slot2'),
+            document.getElementById('slot3')
+        ];
+        
+        const bonusSlot = document.getElementById('bonus-slot');
+        const bonusSymbolAnimation = document.getElementById('bonus-symbol-animation');
+        
+        // Элементы выбора сфер
+        const sphereBtns = document.querySelectorAll('.sphere-btn');
+        const selectedSpheres = [
+            document.getElementById('selected-sphere-1'),
+            document.getElementById('selected-sphere-2'),
+            document.getElementById('selected-sphere-3')
+        ];
+        
+        // Элементы управления ставкой
+        const betAmountEl = document.getElementById('bet-amount');
+        const betDecreaseBtn = document.getElementById('bet-decrease');
+        const betIncreaseBtn = document.getElementById('bet-increase');
+        const betQuickBtns = document.querySelectorAll('.bet-btn[data-bet]');
+        
+        // Элементы выбора режима
+        const modeBtns = document.querySelectorAll('.mode-btn');
+        
+        // Коэффициенты
+        const coeff1El = document.getElementById('coeff-1');
+        const coeff2El = document.getElementById('coeff-2');
+        const coeff3El = document.getElementById('coeff-3');
+        const example1El = document.getElementById('example-1');
+        const example2El = document.getElementById('example-2');
+        const example3El = document.getElementById('example-3');
+        
+        // Бонусные элементы
+        const freeSpinsEl = document.getElementById('free-spins');
+        const bonusMultEl = document.getElementById('bonus-mult');
+        const bonusTotalMultiplierEl = document.getElementById('bonus-total-multiplier');
+        const bonusResultOverlay = document.getElementById('bonus-result-overlay');
+        const bonusTotalWinningsEl = document.getElementById('bonus-total-winnings');
+        const bonusFinalMultiplierEl = document.getElementById('bonus-final-multiplier');
+        const closeBonusResultBtn = document.getElementById('close-bonus-result');
+        
+        // Кнопки управления
+        const spinBtn = document.getElementById('spin-btn');
+        const autoSpinBtn = document.getElementById('auto-spin-btn');
+        const buyBonusBtn = document.getElementById('buy-bonus-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const resultEl = document.getElementById('result');
+        const matchInfoEl = document.getElementById('match-info');
+        
+        // Статистика
+        const balanceEl = document.getElementById('balance');
+        const winsEl = document.getElementById('wins');
+        const lossesEl = document.getElementById('losses');
+        const profitEl = document.getElementById('profit');
+        
+        // Переменные игры
+        let balance = 100.00;
+        let wins = 0;
+        let losses = 0;
+        let totalProfit = 0.00;
+        let isSpinning = false;
+        let autoSpin = false;
+        let isBonusActive = false;
+        let freeSpins = 0;
+        let bonusMultiplier = 1.00;
+        let isBonusGameActive = false;
+        let isInBonusSpin = false;
+        let bonusSpinResults = []; // Для хранения результатов бонусных спинов
+        let bonusSpinWins = 0; // Сумма выигрышей в бонусной игре (без множителя)
+        let totalBonusMultiplier = 1.00; // Итоговый множитель после всех @
+        let bonusSlotSpinning = false;
+        
+        // Текущие настройки игры
+        let selectedCombination = ['?', '?', '?']; // Комбинация по умолчанию
+        let currentBet = 10.00;
+        let currentMode = 'low'; // low, medium, high
+        
+        // Коэффициенты для разных режимов
+        const coefficients = {
+            low: { p1: 0.6, p2: 2, p3: 6 },
+            medium: { p1: 0.4, p2: 1.5, p3: 12 },
+            high: { p1: 0.2, p2: 0.5, p3: 20 }
+        };
+        
+        // Множители для бонусного слота
+        const bonusMultipliers = [2, 3, 4, 35];
+        const bonusMultiplierProbabilities = [50, 25, 23, 2]; // Проценты
+        
+        // Цвета для сфер
+        const sphereColors = {
+            'Q': { name: 'Quas', class: 'quas', color: '#00bcd4' },
+            'W': { name: 'Wex', class: 'wex', color: '#2196f3' },
+            'E': { name: 'Exort', class: 'exort', color: '#ff5722' },
+            '@': { name: 'Bonus', class: 'bonus', color: '#ffeb3b' }
+        };
+        
+        // Инициализация игры
+        function initGame() {
+            updateSelectedSpheresDisplay();
+            updateBetAmount();
+            updateCoefficientsDisplay();
+            updateStats();
+            updateBonusStats();
+            initSlots();
+            
+            // Устанавливаем обработчики событий
+            setupEventListeners();
+            
+            // Обновляем состояние кнопок
+            updateButtonsState();
+        }
+        
+        // Обновление состояния кнопок (вкл/выкл)
+        function updateButtonsState() {
+            const isDisabled = isSpinning || isBonusGameActive || bonusSlotSpinning;
+            
+            // Кнопки выбора сфер
+            sphereBtns.forEach(btn => {
+                if (isDisabled) {
+                    btn.classList.add('disabled');
+                } else {
+                    btn.classList.remove('disabled');
+                }
+            });
+            
+            // Кнопки изменения ставки
+            [betDecreaseBtn, betIncreaseBtn, ...betQuickBtns].forEach(btn => {
+                if (isDisabled) {
+                    btn.classList.add('disabled');
+                } else {
+                    btn.classList.remove('disabled');
+                }
+            });
+            
+            // Кнопки выбора режима
+            modeBtns.forEach(btn => {
+                if (isDisabled) {
+                    btn.classList.add('disabled');
+                } else {
+                    btn.classList.remove('disabled');
+                }
+            });
+            
+            // Основные кнопки
+            if (isDisabled) {
+                spinBtn.classList.add('disabled');
+                autoSpinBtn.classList.add('disabled');
+                buyBonusBtn.classList.add('disabled');
+            } else {
+                spinBtn.classList.remove('disabled');
+                autoSpinBtn.classList.remove('disabled');
+                
+                // Кнопка покупки бонуса доступна только при достаточном балансе
+                if (balance >= currentBet * 250 && !isBonusGameActive) {
+                    buyBonusBtn.classList.remove('disabled');
+                } else {
+                    buyBonusBtn.classList.add('disabled');
+                }
+            }
+        }
+        
+        // Настройка обработчиков событий
+        function setupEventListeners() {
+            // Выбор сферы
+            sphereBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (isSpinning || isBonusGameActive || bonusSlotSpinning || this.classList.contains('disabled')) return;
+                    
+                    const sphere = this.getAttribute('data-sphere');
+                    selectNextSphere(sphere);
+                    
+                    // Подсветка выбранной кнопки
+                    sphereBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+            
+            // Управление ставкой
+            betDecreaseBtn.addEventListener('click', () => {
+                if (isSpinning || isBonusGameActive || bonusSlotSpinning || betDecreaseBtn.classList.contains('disabled')) return;
+                changeBetAmount(-1);
+            });
+            
+            betIncreaseBtn.addEventListener('click', () => {
+                if (isSpinning || isBonusGameActive || bonusSlotSpinning || betIncreaseBtn.classList.contains('disabled')) return;
+                changeBetAmount(1);
+            });
+            
+            betQuickBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (isSpinning || isBonusGameActive || bonusSlotSpinning || this.classList.contains('disabled')) return;
+                    const bet = parseFloat(this.getAttribute('data-bet'));
+                    setBetAmount(bet);
+                });
+            });
+            
+            // Выбор режима
+            modeBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (isSpinning || isBonusGameActive || bonusSlotSpinning || this.classList.contains('disabled')) return;
+                    const mode = this.getAttribute('data-mode');
+                    setMode(mode);
+                });
+            });
+            
+            // Кнопки управления игрой
+            spinBtn.addEventListener('click', () => {
+                if (!spinBtn.classList.contains('disabled')) {
+                    spinSlots();
+                }
+            });
+            
+            autoSpinBtn.addEventListener('click', () => {
+                if (!autoSpinBtn.classList.contains('disabled')) {
+                    toggleAutoSpin();
+                }
+            });
+            
+            buyBonusBtn.addEventListener('click', () => {
+                if (!buyBonusBtn.classList.contains('disabled')) {
+                    buyBonus();
+                }
+            });
+            
+            resetBtn.addEventListener('click', resetGame);
+            
+            closeBonusResultBtn.addEventListener('click', closeBonusResult);
+            
+            // Вращение по пробелу
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' && !isSpinning && !isBonusGameActive && !bonusSlotSpinning && balance >= currentBet) {
+                    e.preventDefault();
+                    spinSlots();
+                }
+            });
+        }
+        
+        // Выбор следующей сферы в комбинации
+        function selectNextSphere(sphere) {
+            // Находим первую позицию с "?" или сдвигаем все
+            const emptyIndex = selectedCombination.indexOf('?');
+            
+            if (emptyIndex !== -1) {
+                // Заполняем первую пустую позицию
+                selectedCombination[emptyIndex] = sphere;
+            } else {
+                // Сдвигаем все сферы и добавляем новую в конец
+                selectedCombination.shift();
+                selectedCombination.push(sphere);
+            }
+            
+            updateSelectedSpheresDisplay();
+        }
+        
+        // Обновление отображения выбранных сфер
+        function updateSelectedSpheresDisplay() {
+            selectedCombination.forEach((sphere, index) => {
+                const sphereEl = selectedSpheres[index];
+                
+                if (sphere === '?') {
+                    sphereEl.textContent = '?';
+                    sphereEl.className = 'selected-sphere';
+                    sphereEl.style.color = '#b0bec5';
+                } else {
+                    sphereEl.textContent = sphere;
+                    sphereEl.className = `selected-sphere ${sphereColors[sphere].class}`;
+                    sphereEl.style.color = sphereColors[sphere].color;
+                }
+            });
+        }
+        
+        // Изменение суммы ставки
+        function changeBetAmount(change) {
+            let newBet = currentBet + change;
+            
+            // Ограничения
+            if (newBet < 1.00) newBet = 1.00;
+            if (newBet > 500.00) newBet = 500.00;
+            if (newBet > balance) newBet = Math.floor(balance * 100) / 100;
+            
+            setBetAmount(newBet);
+        }
+        
+        // Установка суммы ставки
+        function setBetAmount(amount) {
+            currentBet = parseFloat(amount.toFixed(2));
+            updateBetAmount();
+            updateCoefficientsDisplay();
+            updateButtonsState(); // Обновляем состояние кнопки покупки бонуса
+        }
+        
+        // Обновление отображения суммы ставки
+        function updateBetAmount() {
+            betAmountEl.textContent = currentBet.toFixed(2);
+            
+            // Изменение цвета при высокой ставке
+            if (currentBet > balance * 0.5) {
+                betAmountEl.style.color = '#f44336';
+            } else if (currentBet > balance * 0.2) {
+                betAmountEl.style.color = '#ff9800';
+            } else {
+                betAmountEl.style.color = '#ffc107';
+            }
+        }
+        
+        // Установка режима игры
+        function setMode(mode) {
+            currentMode = mode;
+            
+            // Обновляем активную кнопку
+            modeBtns.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-mode') === mode) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            updateCoefficientsDisplay();
+        }
+        
+        // Обновление отображения коэффициентов
+        function updateCoefficientsDisplay() {
+            const coeffs = coefficients[currentMode];
+            
+            coeff1El.textContent = `${coeffs.p1}x`;
+            coeff2El.textContent = `${coeffs.p2}x`;
+            coeff3El.textContent = `${coeffs.p3}x`;
+            
+            example1El.textContent = (currentBet * coeffs.p1).toFixed(2);
+            example2El.textContent = (currentBet * coeffs.p2).toFixed(2);
+            example3El.textContent = (currentBet * coeffs.p3).toFixed(2);
+        }
+        
+        // Инициализация слотов
+        function initSlots() {
+            // Устанавливаем начальные символы
+            const initialSymbols = ['Q', 'W', 'E'];
+            
+            slots.forEach((slot, index) => {
+                slot.textContent = initialSymbols[index];
+                slot.className = `slot ${initialSymbols[index].toLowerCase()}`;
+            });
+            
+            // Бонусный слот
+            bonusSlot.textContent = '2x';
+        }
+        
+        // Получить случайную сферу с учетом вероятностей
+        function getRandomSphere() {
+            const rand = Math.random() * 100;
+            
+            // 10% шанс на бонусный символ
+            if (rand < 10) {
+                return '@';
+            }
+            
+            // Остальные 90% делятся поровну между Q, W, E
+            const sphereRand = Math.random() * 90;
+            if (sphereRand < 30) return 'Q';
+            if (sphereRand < 60) return 'W';
+            return 'E';
+        }
+        
+        // Получить случайный множитель для бонусного слота
+        function getRandomBonusMultiplier() {
+            const rand = Math.random() * 100;
+            let totalProbability = 0;
+            
+            for (let i = 0; i < bonusMultipliers.length; i++) {
+                totalProbability += bonusMultiplierProbabilities[i];
+                if (rand <= totalProbability) {
+                    return bonusMultipliers[i];
+                }
+            }
+            
+            return bonusMultipliers[0]; // fallback
+        }
+        
+        // Вращение слотов
+        function spinSlots() {
+            // Проверяем, есть ли полная комбинация
+            if (selectedCombination.includes('?')) {
+                resultEl.innerHTML = '<div>Сначала выберите полную комбинацию из 3 сфер!</div>';
+                resultEl.className = 'result lose';
+                return;
+            }
+            
+            if (isSpinning || isBonusGameActive || bonusSlotSpinning) {
+                if (isBonusGameActive && bonusSlotSpinning) {
+                    // Если крутится бонусный слот, ждем его завершения
+                    return;
+                }
+            }
+            
+            // Проверяем баланс для обычных спинов
+            if (!isBonusGameActive && balance < currentBet) {
+                resultEl.innerHTML = '<div class="lose">Недостаточно средств для ставки!</div>';
+                resultEl.className = 'result lose';
+                return;
+            }
+            
+            // Если это бесплатный спин в бонусной игре
+            if (isBonusGameActive && freeSpins > 0) {
+                freeSpins--;
+                isInBonusSpin = true;
+                updateBonusStats();
+            } else if (!isBonusGameActive) {
+                // Вычитаем ставку (только для обычных спинов)
+                balance -= currentBet;
+                updateStats();
+                isInBonusSpin = false;
+            }
+            
+            isSpinning = true;
+            updateButtonsState();
+            
+            // Анимация вращения
+            slots.forEach(slot => {
+                slot.classList.add('slot-spinning');
+                
+                // Меняем символы во время вращения для эффекта
+                const spinInterval = setInterval(() => {
+                    const randomSymbol = getRandomSphere();
+                    slot.textContent = randomSymbol;
+                    slot.className = `slot ${randomSymbol === '@' ? 'bonus' : randomSymbol.toLowerCase()}`;
+                }, 100);
+                
+                // Останавливаем смену символов через время
+                setTimeout(() => {
+                    clearInterval(spinInterval);
+                }, 1000);
+            });
+            
+            // Определяем результаты вращения
+            const slotResults = [];
+            
+            // Остановка вращения через случайное время
+            const spinDuration = 1000 + Math.random() * 1000;
+            
+            setTimeout(() => {
+                // Останавливаем каждый слот с задержкой
+                slots.forEach((slot, index) => {
+                    setTimeout(() => {
+                        slot.classList.remove('slot-spinning');
+                        
+                        // Определяем результат для этого слота
+                        const result = getRandomSphere();
+                        slotResults.push(result);
+                        
+                        // Устанавливаем финальный символ
+                        slot.textContent = result;
+                        slot.className = `slot ${result === '@' ? 'bonus' : result.toLowerCase()}`;
+                        
+                        // Если это последний слот
+                        if (index === slots.length - 1) {
+                            finishSpin(slotResults);
+                        }
+                    }, 300 * index);
+                });
+            }, spinDuration);
+        }
+        
+        // Завершение вращения
+        function finishSpin(slotResults) {
+            isSpinning = false;
+            
+            // Проверяем, выпали ли три бонусных символа (только для обычной игры)
+            const isBonusWin = !isBonusGameActive && slotResults[0] === '@' && slotResults[1] === '@' && slotResults[2] === '@';
+            
+            // Считаем совпадения
+            let matches = 0;
+            for (let i = 0; i < 3; i++) {
+                if (slotResults[i] === selectedCombination[i]) {
+                    matches++;
+                }
+            }
+            
+            // Вычисляем выигрыш
+            let winAmount = 0;
+            const coeffs = coefficients[currentMode];
+            
+            if (matches === 1) {
+                winAmount = currentBet * coeffs.p1;
+            } else if (matches === 2) {
+                winAmount = currentBet * coeffs.p2;
+            } else if (matches === 3) {
+                winAmount = currentBet * coeffs.p3;
+            }
+            
+            // Если это бонусный спин, сохраняем результат (но не применяем множитель пока)
+            if (isBonusGameActive) {
+                bonusSpinResults.push({
+                    matches: matches,
+                    winAmount: winAmount,
+                    symbols: [...slotResults]
+                });
+                bonusSpinWins += winAmount;
+                
+                // Проверяем, выпал ли @ в бонусной игре
+                const hasBonusSymbol = slotResults.includes('@');
+                
+                if (hasBonusSymbol) {
+                    // Показываем анимацию бонусного символа
+                    showBonusSymbolAnimation(() => {
+                        // После анимации крутим бонусный слот для нового множителя
+                        spinBonusSlot(() => {
+                            // После завершения вращения бонусного слота показываем результат
+                            updateBonusSpinResult(matches, winAmount);
+                            
+                            // Если еще есть спины, продолжаем
+                            if (freeSpins > 0) {
+                                setTimeout(() => {
+                                    spinSlots();
+                                }, 1500);
+                            } else {
+                                finishBonusGame();
+                            }
+                        });
+                    });
+                } else {
+                    // Обновляем результат
+                    updateBonusSpinResult(matches, winAmount);
+                    
+                    // Если еще есть спины, продолжаем
+                    if (freeSpins > 0) {
+                        setTimeout(() => {
+                            spinSlots();
+                        }, 1500);
+                    } else {
+                        finishBonusGame();
+                    }
+                }
+            } else {
+                // Обычный спин - сразу обновляем баланс
+                if (winAmount > 0) {
+                    balance += winAmount;
+                    wins++;
+                    totalProfit += (winAmount - currentBet);
+                    
+                    resultEl.innerHTML = `
+                        <div class="win">ПОБЕДА! ${matches} совпадений!</div>
+                        <div class="win-amount">+${winAmount.toFixed(2)} очков</div>
+                        <div class="match-info">Совпадений: ${matches}</div>
+                    `;
+                    resultEl.className = 'result win';
+                } else {
+                    losses++;
+                    totalProfit -= currentBet;
+                    
+                    // Показываем "почти выигрыш", если есть 2 совпадения
+                    if (matches === 2) {
+                        resultEl.innerHTML = `
+                            <div class="neutral">ПОЧТИ! ${matches} совпадения из 3!</div>
+                            <div class="match-info">Попробуйте еще раз, удача рядом!</div>
+                        `;
+                        resultEl.className = 'result neutral';
+                    } else {
+                        resultEl.innerHTML = `
+                            <div class="lose">Совпадений нет.</div>
+                            <div class="match-info">Совпадений: ${matches}</div>
+                        `;
+                        resultEl.className = 'result lose';
+                    }
+                }
+                
+                updateStats();
+            }
+            
+            // Обновляем информацию о совпадениях
+            if (!isBonusGameActive) {
+                matchInfoEl.textContent = `Совпадений: ${matches}`;
+            }
+            
+            // Если выпали три бонусных символа в обычной игре
+            if (isBonusWin) {
+                startBonusGame();
+                return;
+            }
+            
+            updateButtonsState();
+            
+            // Проверяем возможность дальнейшей игры
+            if (!isBonusGameActive && balance < currentBet && freeSpins === 0) {
+                resultEl.innerHTML = `
+                    <div class="lose">Недостаточно очков для ставки ${currentBet.toFixed(2)}!</div>
+                    <div>Уменьшите ставку или нажмите СБРОС для начала новой игры.</div>
+                `;
+                resultEl.className = 'result lose';
+            }
+            
+            // Если автоспин активен и есть средства для следующего вращения
+            if (autoSpin && !isBonusGameActive && balance >= currentBet) {
+                setTimeout(spinSlots, 1500);
+            } else if (autoSpin && !isBonusGameActive && balance < currentBet) {
+                toggleAutoSpin(); // Выключаем автоспин при недостатке средств
+            }
+        }
+        
+        // Показать анимацию бонусного символа
+        function showBonusSymbolAnimation(callback) {
+            bonusSymbolAnimation.classList.add('show');
+            
+            // Убираем анимацию через 1 секунду
+            setTimeout(() => {
+                bonusSymbolAnimation.classList.remove('show');
+                
+                // Вызываем колбэк после завершения анимации
+                if (callback) {
+                    setTimeout(callback, 300);
+                }
+            }, 1000);
+        }
+        
+        // Обновление результата бонусного спина
+        function updateBonusSpinResult(matches, winAmount) {
+            if (matches > 0) {
+                resultEl.innerHTML = `
+                    <div class="bonus-active">БОНУСНЫЙ СПИН! ${matches} совпадений!</div>
+                    <div class="win-amount">+${winAmount.toFixed(2)} очков</div>
+                    <div class="match-info">Множитель: ${totalBonusMultiplier.toFixed(2)}x (будет применен в конце) | Осталось спинов: ${freeSpins}</div>
+                `;
+                resultEl.className = 'result win';
+            } else {
+                resultEl.innerHTML = `
+                    <div class="bonus-active">БОНУСНЫЙ СПИН: Совпадений нет</div>
+                    <div class="match-info">Множитель: ${totalBonusMultiplier.toFixed(2)}x (будет применен в конце) | Осталось спинов: ${freeSpins}</div>
+                `;
+                resultEl.className = 'result neutral';
+            }
+        }
+        
+        // Вращение бонусного слота
+        function spinBonusSlot(callback) {
+            bonusSlotSpinning = true;
+            updateButtonsState();
+            
+            // Анимация вращения бонусного слота
+            bonusSlot.classList.add('bonus-slot-spinning');
+            
+            // Меняем множители во время вращения
+            const spinInterval = setInterval(() => {
+                const randomIndex = Math.floor(Math.random() * bonusMultipliers.length);
+                bonusSlot.textContent = `${bonusMultipliers[randomIndex]}x`;
+            }, 80);
+            
+            // Останавливаем через время
+            setTimeout(() => {
+                clearInterval(spinInterval);
+                bonusSlot.classList.remove('bonus-slot-spinning');
+                
+                // Определяем финальный множитель
+                const newMultiplier = getRandomBonusMultiplier();
+                bonusSlot.textContent = `${newMultiplier}x`;
+                
+                // Обновляем общий множитель
+                totalBonusMultiplier *= newMultiplier;
+                updateBonusStats();
+                
+                // Показываем сообщение о новом множителе
+                resultEl.innerHTML = `
+                    <div class="bonus-active">ВЫПАЛ БОНУСНЫЙ СИМВОЛ @!</div>
+                    <div class="win-amount">Новый множитель: ${newMultiplier}x</div>
+                    <div class="match-info">Общий множитель: ${totalBonusMultiplier.toFixed(2)}x</div>
+                `;
+                resultEl.className = 'result win';
+                
+                bonusSlotSpinning = false;
+                updateButtonsState();
+                
+                // Вызываем колбэк после небольшой задержки
+                if (callback) {
+                    setTimeout(callback, 1000);
+                }
+            }, 1200);
+        }
+        
+        // Начать бонусную игру
+        function startBonusGame() {
+            isBonusGameActive = true;
+            freeSpins = 7; // ИЗМЕНЕНО: теперь 12 спинов вместо 5
+            bonusSpinResults = [];
+            bonusSpinWins = 0;
+            totalBonusMultiplier = 1.00;
+            
+            updateBonusStats();
+            updateButtonsState();
+            
+            resultEl.innerHTML = `
+                <div class="bonus-active">БОНУСНАЯ ИГРА АКТИВИРОВАНА!</div>
+                <div class="win-amount">12 БЕСПЛАТНЫХ СПИНОВ</div>
+                <div class="match-info">Выпадет @ = крутится множитель</div>
+            `;
+            resultEl.className = 'result win';
+            
+            // Сначала крутим бонусный слот для начального множителя
+            spinBonusSlot(() => {
+                // После получения начального множителя запускаем первый бонусный спин
+                setTimeout(() => {
+                    spinSlots();
+                }, 1000);
+            });
+        }
+        
+        // Завершить бонусную игру
+        function finishBonusGame() {
+            // Вычисляем итоговый выигрыш с учетом множителя
+            const totalWinnings = bonusSpinWins * totalBonusMultiplier;
+            
+            // Обновляем баланс
+            balance += totalWinnings;
+            wins += bonusSpinResults.filter(r => r.winAmount > 0).length;
+            totalProfit += totalWinnings; // В бонусной игре не было ставок
+            
+            updateStats();
+            
+            // Показываем результаты бонусной игры
+            bonusTotalWinningsEl.textContent = totalWinnings.toFixed(2);
+            bonusFinalMultiplierEl.textContent = totalBonusMultiplier.toFixed(2) + 'x';
+            bonusResultOverlay.style.display = 'flex';
+            
+            // Сбрасываем состояние бонусной игры
+            isBonusGameActive = false;
+            isInBonusSpin = false;
+            freeSpins = 0;
+            totalBonusMultiplier = 1.00;
+            
+            updateBonusStats();
+            updateButtonsState();
+        }
+        
+        // Закрыть результаты бонусной игры
+        function closeBonusResult() {
+            bonusResultOverlay.style.display = 'none';
+            
+            // Показываем итоговый результат
+            resultEl.innerHTML = `
+                <div class="win">БОНУСНАЯ ИГРА ЗАВЕРШЕНА!</div>
+                <div>Вы можете продолжить обычную игру</div>
+            `;
+            resultEl.className = 'result win';
+        }
+        
+        // Покупка бонуса
+        function buyBonus() {
+            const bonusCost = currentBet * 250;
+            
+            if (balance < bonusCost) {
+                resultEl.innerHTML = '<div class="lose">Недостаточно средств для покупки бонуса!</div>';
+                resultEl.className = 'result lose';
+                return;
+            }
+            
+            balance -= bonusCost;
+            updateStats();
+            
+            // Запускаем бонусную игру
+            startBonusGame();
+        }
+        
+        // Обновление статистики бонусов
+        function updateBonusStats() {
+            freeSpinsEl.textContent = freeSpins;
+            bonusMultEl.textContent = totalBonusMultiplier.toFixed(2) + 'x';
+            bonusTotalMultiplierEl.textContent = `Текущий множитель: ${totalBonusMultiplier.toFixed(2)}x`;
+            
+            // Подсветка если есть активные бонусы
+            if (freeSpins > 0) {
+                freeSpinsEl.style.color = '#ffeb3b';
+                bonusMultEl.style.color = '#ffeb3b';
+            } else {
+                freeSpinsEl.style.color = '#b0bec5';
+                bonusMultEl.style.color = '#b0bec5';
+            }
+        }
+        
+        // Автоматическое вращение
+        function toggleAutoSpin() {
+            if (isSpinning || isBonusGameActive || bonusSlotSpinning) return;
+            
+            autoSpin = !autoSpin;
+            
+            if (autoSpin) {
+                autoSpinBtn.innerHTML = '<i class="fas fa-stop"></i> STOP AUTO';
+                autoSpinBtn.style.background = 'linear-gradient(to right, #f44336, #d32f2f)';
+                
+                // Запускаем спин, если не вращается сейчас
+                if (!isSpinning && balance >= currentBet) {
+                    spinSlots();
+                }
+            } else {
+                autoSpinBtn.innerHTML = '<i class="fas fa-sync"></i> AUTO';
+                autoSpinBtn.style.background = 'linear-gradient(to right, #2196f3, #00bcd4)';
+            }
+        }
+        
+        // Сброс игры
+        function resetGame() {
+            balance = 100.00;
+            wins = 0;
+            losses = 0;
+            totalProfit = 0.00;
+            
+            selectedCombination = ['?', '?', '?'];
+            freeSpins = 0;
+            totalBonusMultiplier = 1.00;
+            isBonusGameActive = false;
+            isInBonusSpin = false;
+            bonusSpinResults = [];
+            bonusSpinWins = 0;
+            bonusSlotSpinning = false;
+            
+            if (autoSpin) {
+                toggleAutoSpin();
+            }
+            
+            resultEl.innerHTML = '<div>Игра сброшена! Выберите комбинацию и нажмите SPIN!</div><div class="match-info">Совпадений: 0</div>';
+            resultEl.className = 'result neutral';
+            
+            updateSelectedSpheresDisplay();
+            updateStats();
+            updateBonusStats();
+            initSlots();
+            updateButtonsState();
+            
+            // Скрываем оверлей бонусной игры если он был открыт
+            bonusResultOverlay.style.display = 'none';
+            
+            // Сбрасываем анимацию бонусного символа
+            bonusSymbolAnimation.classList.remove('show');
+        }
+        
+        // Обновление статистики
+        function updateStats() {
+            balanceEl.textContent = balance.toFixed(2);
+            winsEl.textContent = wins;
+            lossesEl.textContent = losses;
+            profitEl.textContent = totalProfit.toFixed(2);
+            
+            // Изменение цвета баланса
+            if (balance < 100) {
+                balanceEl.style.color = '#f44336';
+            } else if (balance < 500) {
+                balanceEl.style.color = '#ff9800';
+            } else {
+                balanceEl.style.color = '#ffc107';
+            }
+            
+            // Изменение цвета прибыли
+            if (totalProfit > 0) {
+                profitEl.style.color = '#4caf50';
+            } else if (totalProfit < 0) {
+                profitEl.style.color = '#f44336';
+            } else {
+                profitEl.style.color = '#ffc107';
+            }
+        }
+        
+        // Инициализация игры при загрузке
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
