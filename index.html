@@ -1791,7 +1791,13 @@
         // Завершить бонусную игру
         function finishBonusGame() {
             // Вычисляем итоговый выигрыш с учетом множителя
-            const totalWinnings = bonusSpinWins * totalBonusMultiplier;
+            const MAX_BONUS_MULTIPLIER = 47.5;
+            const cappedMultiplier = Math.min(
+                totalBonusMultiplier,
+                MAX_BONUS_MULTIPLIER
+            );
+
+            const totalWinnings = bonusSpinWins * cappedMultiplier;
             
             // Обновляем баланс
             balance += totalWinnings;
